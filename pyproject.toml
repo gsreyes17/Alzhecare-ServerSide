@@ -1,0 +1,19 @@
+[project]
+name = "python-alzhecare-cnn"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.13"
+dependencies = [
+    "bcrypt>=5.0.0",
+    "boto3>=1.42.83",
+    "fastapi>=0.135.3",
+    "inference-sdk>=1.2.0",
+    "pillow>=11.3.0",
+    "pydantic[email]>=2.12.5",
+    "pydantic-settings>=2.13.1",
+    "pymongo>=4.16.0",
+    "python-multipart>=0.0.22",
+    "python-jose[cryptography]>=3.5.0",
+    "uvicorn>=0.43.0",
+]
