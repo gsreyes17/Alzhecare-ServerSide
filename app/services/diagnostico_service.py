@@ -8,8 +8,8 @@ from PIL import Image
 
 from app.repositories.diagnostico_repository import DiagnosticoRepository
 from app.schemas.diagnostico import DiagnosticoDocument
-from app.services.roboflow_service import roboflow_service
 from app.services.s3_service import s3_service
+from app.services.torch_service import torch_service
 
 
 class DiagnosticoService:
@@ -40,7 +40,7 @@ class DiagnosticoService:
                 temp_path = temp_file.name
                 image.save(temp_path, "JPEG", quality=90)
 
-            analysis = await roboflow_service.analyze_image(temp_path)
+            analysis = await torch_service.analyze_image(temp_path)
 
             base_name = filename or "image.jpg"
             original_key = s3_service.upload_image(file_content, f"original_{base_name}")
@@ -55,6 +55,7 @@ class DiagnosticoService:
                 estado="completado",
                 imagen_original_s3_key=original_key,
                 imagen_original_url=original_url,
+                # Se mantiene el nombre por compatibilidad con datos históricos.
                 datos_roboflow=analysis.get("raw", {}),
                 created_at=now,
                 updated_at=now,

@@ -1,12 +1,13 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
-    app_name: str = "Roboflow Simple API"
+    app_name: str = "Alzhecare API"
     debug: bool = True
 
     secret_key: str
@@ -18,9 +19,9 @@ class Settings(BaseSettings):
     initial_admin_apellido: str | None = None
     initial_admin_email: str | None = None
 
-    roboflow_api_key: str
-    roboflow_workspace: str
-    roboflow_workflow_id: str
+    torch_model_path: str = str(Path("app") / "models" / "v1" / "alzheimer_ensemble_v1.pth")
+    torch_label_classes_path: str = str(Path("app") / "models" / "v1" / "le_classes.pkl")
+    torch_device: str = "auto"
 
     aws_access_key_id: str
     aws_secret_access_key: str

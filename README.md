@@ -1,11 +1,11 @@
 
 .\run.ps1
 
-# Roboflow Simple App
+# Alzhecare Server API
 
 Proyecto simple con mejor arquitectura por capas para:
 
-- Analizar imagenes con un workflow de Roboflow
+- Analizar imagenes con un modelo local de PyTorch
 - Guardar imagenes en AWS S3
 - Generar URLs firmadas (presigned URLs)
 - Guardar resultados en MongoDB
@@ -16,7 +16,7 @@ Proyecto simple con mejor arquitectura por capas para:
 ## 1) Estructura
 
 ```
-roboflow_simple_app/
+alzhecare_server/
   app/
     core/
       config.py
@@ -36,7 +36,7 @@ roboflow_simple_app/
     services/
       auth_service.py
       diagnostico_service.py
-      roboflow_service.py
+      torch_service.py
       s3_service.py
     dependencies.py
     main.py
@@ -49,7 +49,7 @@ roboflow_simple_app/
 ```bash
 python -m venv .venv
 .venv\Scripts\activate
-pip install -r requirements.txt
+pip install -e .
 ```
 
 ## 3) Configuracion
@@ -57,9 +57,9 @@ pip install -r requirements.txt
 1. Copia `.env.example` a `.env`
 2. Completa tus credenciales y valores:
 
-- `ROBOFLOW_API_KEY`
-- `ROBOFLOW_WORKSPACE`
-- `ROBOFLOW_WORKFLOW_ID`
+- `TORCH_MODEL_PATH`
+- `TORCH_LABEL_CLASSES_PATH`
+- `TORCH_DEVICE` (`auto`, `cpu`, `cuda`)
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_S3_BUCKET`
@@ -97,8 +97,8 @@ uvicorn app.main:app --reload --port 8010
 
 1. Recibe imagen
 2. Valida formato
-3. Ejecuta workflow de Roboflow
-4. Sube imagen original (y procesada si existe) a S3
+3. Ejecuta inferencia local con modelo Torch
+4. Sube imagen original a S3
 5. Genera URLs firmadas
 6. Guarda metadata en MongoDB
 7. Retorna resultado de analisis
