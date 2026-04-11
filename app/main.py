@@ -1,6 +1,6 @@
-from fastapi import FastAPI
+from fastapi import Depends,FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from typing import Annotated
 from app.core.config import get_settings
 from app.routers.admin_citas import router as admin_citas_router
 from app.routers.admin_users import router as admin_users_router
@@ -9,6 +9,7 @@ from app.routers.diagnostico import router as diagnostico_router
 from app.routers.doctor import router as doctor_router
 from app.routers.patient import router as patient_router
 from app.services.auth_service import auth_service
+from fastapi.security import OAuth2PasswordBearer
 
 settings = get_settings()
 app = FastAPI(title=settings.app_name, debug=settings.debug)
@@ -28,6 +29,11 @@ app.include_router(diagnostico_router)
 app.include_router(doctor_router)
 app.include_router(patient_router)
 
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="api/auth/login/form")
+
+@app.get("/items/")
+async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
 
 @app.on_event("startup")
 def bootstrap_initial_admin() -> None:
