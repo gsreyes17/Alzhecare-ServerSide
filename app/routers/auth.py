@@ -13,7 +13,7 @@ from app.schemas.auth import (
 )
 from app.services.auth_service import auth_service
 
-router = APIRouter(prefix="/api/auth", tags=["Autenticacion"])
+router = APIRouter(prefix="/api/auth", tags=["Authentication"])
 
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
@@ -22,11 +22,11 @@ async def register(payload: RegisterRequest) -> UserResponse:
     return UserResponse(
         id=str(user["_id"]),
         username=user["username"],
-        name=user["nombre"],
-        lastname=user["apellido"],
+        name=user["name"],
+        lastname=user["lastname"],
         email=user["email"],
         role=user.get("role", UserRole.patient.value),
-        status=user["estado"],
+        status=user["status"],
         profile_image_url=None,
         created_at=user["created_at"],
         updated_at=user["updated_at"],

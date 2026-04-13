@@ -3,25 +3,25 @@ from fastapi import APIRouter, Depends
 from app.dependencies import require_roles
 from app.schemas.auth import UserRole
 from app.schemas.coordinacion import AppointmentResponse, AppointmentUpdateStatusRequest
-from app.services.coordinacion_service import coordinacion_service
+from app.services.coordinacion_service import coordination_service
 
 router = APIRouter(prefix="/api/admin/citas", tags=["Admin Citas"])
 
 
 @router.get("")
-async def listar_citas_admin(
-    estado: str | None = None,
+async def list_admin_appointments(
+    status: str | None = None,
     skip: int = 0,
     limit: int = 100,
     current_user: dict = Depends(require_roles(UserRole.admin.value)),
 ):
-    return coordinacion_service.listar_citas_admin(estado=estado, skip=skip, limit=limit)
+    return coordination_service.list_admin_appointments(status=status, skip=skip, limit=limit)
 
 
-@router.patch("/{cita_id}/estado", response_model=AppointmentResponse)
-async def actualizar_estado_cita_admin(
-    cita_id: str,
+@router.patch("/{appointment_id}/status", response_model=AppointmentResponse)
+async def update_admin_appointment_status(
+    appointment_id: str,
     payload: AppointmentUpdateStatusRequest,
     current_user: dict = Depends(require_roles(UserRole.admin.value)),
 ):
-    return coordinacion_service.actualizar_estado_cita_admin(cita_id, payload.status.value)
+    return coordination_service.update_admin_appointment_status(appointment_id, payload.status.value)

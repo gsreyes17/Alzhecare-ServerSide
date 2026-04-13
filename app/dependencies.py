@@ -29,7 +29,7 @@ def get_current_active_user(token: str = Depends(oauth2_scheme)) -> dict:
     if not user:
         raise credentials_exception
 
-    if not user.get("estado", True):
+    if not user.get("status", True):
         raise HTTPException(status_code=403, detail="Usuario inactivo")
 
     user["id"] = str(user.pop("_id"))

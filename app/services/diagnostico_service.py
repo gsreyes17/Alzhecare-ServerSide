@@ -6,27 +6,27 @@ from datetime import datetime, timezone
 from fastapi import HTTPException
 from PIL import Image
 
-from app.repositories.diagnostico_repository import DiagnosticoRepository
+from app.repositories.diagnostico_repository import DiagnosisRepository
 from app.schemas.diagnostico import DiagnosisDocument
 from app.services.s3_service import s3_service
 from app.services.torch_service import torch_service
 
 
-class DiagnosticoService:
+class DiagnosisService:
     def __init__(self) -> None:
-        self.repo = DiagnosticoRepository()
+        self.repo = DiagnosisRepository()
 
     def _attach_fresh_signed_url(self, doc: dict) -> dict:
-        key = doc.get("imagen_original_s3_key")
+        key = doc.get("image_s3_key")
         if key:
             try:
-                doc["imagen_original_url"] = s3_service.sign_get_url(key)
+                doc["image_url"] = s3_service.sign_get_url(key)
             except Exception:
                 # Keep existing URL when signing fails to avoid breaking response payloads.
                 pass
         return doc
 
-    async def analizar(self, user_id: str, file_content: bytes, filename: str | None) -> dict:
+    async def analyze(self, user_id: str, file_content: bytes, filename: str | None) -> dict:
         try:
             image = Image.open(io.BytesIO(file_content))
             if image.mode != "RGB":
@@ -47,20 +47,19 @@ class DiagnosticoService:
             original_url = s3_service.sign_get_url(original_key)
 
             now = datetime.now(timezone.utc)
-            diagnostico_doc = DiagnosisDocument(
+            diagnosis_doc = DiagnosisDocument(
                 user_id=user_id,
                 result=analysis["result_label"],
                 confidence=float(analysis["confidence"]),
                 status="completado",
                 image_s3_key=original_key,
                 image_url=original_url,
-                # Se mantiene el nombre por compatibilidad con datos históricos.
                 model_output=analysis.get("raw", {}),
                 created_at=now,
                 updated_at=now,
             )
 
-            created = self.repo.create(diagnostico_doc.model_dump())
+            created = self.repo.create(diagnosis_doc.model_dump())
             if created is None:
                 raise HTTPException(status_code=500, detail="Error al crear el diagnóstico")
             created["id"] = str(created.pop("_id"))
@@ -69,15 +68,15 @@ class DiagnosticoService:
             if temp_path and os.path.exists(temp_path):
                 os.remove(temp_path)
 
-    def historial(self, user_id: str, limit: int = 50) -> list[dict]:
+    def history(self, user_id: str, limit: int = 50) -> list[dict]:
         docs = self.repo.list_by_user(user_id=user_id, limit=limit)
         for doc in docs:
             self._attach_fresh_signed_url(doc)
             doc["id"] = str(doc.pop("_id"))
         return docs
 
-    def detalle(self, user_id: str, diagnostico_id: str) -> dict | None:
-        doc = self.repo.get_by_id_for_user(diagnostico_id=diagnostico_id, user_id=user_id)
+    def detail(self, user_id: str, diagnosis_id: str) -> dict | None:
+        doc = self.repo.get_by_id_for_user(diagnosis_id=diagnosis_id, user_id=user_id)
         if not doc:
             return None
         self._attach_fresh_signed_url(doc)
@@ -85,4 +84,4 @@ class DiagnosticoService:
         return doc
 
 
-diagnostico_service = DiagnosticoService()
+diagnosis_service = DiagnosisService()

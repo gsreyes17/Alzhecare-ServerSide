@@ -16,10 +16,10 @@ class NotificationRepository:
             raise RuntimeError("No se pudo crear la notificación")
         return created
 
-    def list_by_user(self, user_id: str, solo_no_leidas: bool = False) -> list[dict]:
+    def list_by_user(self, user_id: str, unread_only: bool = False) -> list[dict]:
         query: dict = {"user_id": user_id}
-        if solo_no_leidas:
-            query["leida"] = False
+        if unread_only:
+            query["read"] = False
         cursor = self.collection.find(query).sort("created_at", -1)
         return list(cursor)
 
@@ -35,5 +35,5 @@ class NotificationRepository:
             oid = ObjectId(notification_id)
         except Exception:
             return None
-        self.collection.update_one({"_id": oid}, {"$set": {"leida": True}})
+        self.collection.update_one({"_id": oid}, {"$set": {"read": True}})
         return self.collection.find_one({"_id": oid})

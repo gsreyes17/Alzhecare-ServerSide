@@ -16,44 +16,44 @@ class AppointmentRepository:
             raise RuntimeError("No se pudo crear la cita")
         return created
 
-    def list_by_doctor(self, doctor_user_id: str, estado: str | None = None) -> list[dict]:
+    def list_by_doctor(self, doctor_user_id: str, status: str | None = None) -> list[dict]:
         query: dict = {"doctor_user_id": doctor_user_id}
-        if estado:
-            query["estado"] = estado
-        cursor = self.collection.find(query).sort("fecha_hora", -1)
+        if status:
+            query["status"] = status
+        cursor = self.collection.find(query).sort("date_time", -1)
         return list(cursor)
 
-    def list_by_patient(self, patient_user_id: str, estado: str | None = None) -> list[dict]:
+    def list_by_patient(self, patient_user_id: str, status: str | None = None) -> list[dict]:
         query: dict = {"patient_user_id": patient_user_id}
-        if estado:
-            query["estado"] = estado
-        cursor = self.collection.find(query).sort("fecha_hora", -1)
+        if status:
+            query["status"] = status
+        cursor = self.collection.find(query).sort("date_time", -1)
         return list(cursor)
 
-    def list_all(self, estado: str | None = None, skip: int = 0, limit: int = 100) -> list[dict]:
+    def list_all(self, status: str | None = None, skip: int = 0, limit: int = 100) -> list[dict]:
         query: dict = {}
-        if estado:
-            query["estado"] = estado
+        if status:
+            query["status"] = status
         cursor = self.collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
         return list(cursor)
 
-    def count_all(self, estado: str | None = None) -> int:
+    def count_all(self, status: str | None = None) -> int:
         query: dict = {}
-        if estado:
-            query["estado"] = estado
+        if status:
+            query["status"] = status
         return self.collection.count_documents(query)
 
-    def get_by_id(self, cita_id: str) -> Optional[dict]:
+    def get_by_id(self, appointment_id: str) -> Optional[dict]:
         try:
-            oid = ObjectId(cita_id)
+            oid = ObjectId(appointment_id)
         except Exception:
             return None
         return self.collection.find_one({"_id": oid})
 
-    def update_estado(self, cita_id: str, estado: str, updated_at) -> Optional[dict]:
+    def update_status(self, appointment_id: str, status: str, updated_at) -> Optional[dict]:
         try:
-            oid = ObjectId(cita_id)
+            oid = ObjectId(appointment_id)
         except Exception:
             return None
-        self.collection.update_one({"_id": oid}, {"$set": {"estado": estado, "updated_at": updated_at}})
+        self.collection.update_one({"_id": oid}, {"$set": {"status": status, "updated_at": updated_at}})
         return self.collection.find_one({"_id": oid})

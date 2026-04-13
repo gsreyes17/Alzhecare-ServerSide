@@ -11,52 +11,52 @@ from app.schemas.coordinacion import (
     BasicUserResponse,
 )
 from app.schemas.diagnostico import AnalysisResponse
-from app.services.coordinacion_service import coordinacion_service
+from app.services.coordinacion_service import coordination_service
 
 router = APIRouter(prefix="/api/doctor", tags=["Doctor"])
 
 
-@router.get("/pacientes/buscar", response_model=list[BasicUserResponse])
-async def buscar_pacientes(
+@router.get("/patients/search", response_model=list[BasicUserResponse])
+async def search_patients(
     q: str,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.buscar_pacientes(q)
+    return coordination_service.search_patients(q)
 
 
-@router.post("/solicitudes", response_model=BindingResponse)
-async def crear_solicitud_vinculacion(
+@router.post("/requests", response_model=BindingResponse)
+async def create_link_request(
     payload: BindingCreateRequest,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.crear_solicitud_vinculacion(
+    return coordination_service.create_link_request(
         doctor_user_id=current_user["id"],
         patient_user_id=payload.patient_user_id,
     )
 
 
-@router.get("/solicitudes", response_model=list[BindingResponse])
-async def listar_solicitudes(
+@router.get("/requests", response_model=list[BindingResponse])
+async def list_requests(
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.listar_solicitudes_doctor(current_user["id"])
+    return coordination_service.list_doctor_requests(current_user["id"])
 
 
-@router.get("/pacientes", response_model=list[BasicUserResponse])
-async def listar_pacientes_asignados(
+@router.get("/patients", response_model=list[BasicUserResponse])
+async def list_assigned_patients(
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.listar_pacientes_doctor(current_user["id"])
+    return coordination_service.list_doctor_patients(current_user["id"])
 
 
-@router.get("/pacientes/{patient_user_id}/historial")
-async def historial_paciente(
+@router.get("/patients/{patient_user_id}/history")
+async def get_patient_history(
     patient_user_id: str,
     limit: int = 100,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
     return {
-        "diagnosticos": coordinacion_service.historial_paciente_para_doctor(
+        "diagnoses": coordination_service.get_patient_history_for_doctor(
             doctor_user_id=current_user["id"],
             patient_user_id=patient_user_id,
             limit=limit,
@@ -64,8 +64,8 @@ async def historial_paciente(
     }
 
 
-@router.post("/pacientes/{patient_user_id}/analizar", response_model=AnalysisResponse)
-async def analizar_para_paciente(
+@router.post("/patients/{patient_user_id}/analyze", response_model=AnalysisResponse)
+async def analyze_for_patient(
     patient_user_id: str,
     file: UploadFile = File(...),
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
@@ -75,7 +75,7 @@ async def analizar_para_paciente(
         raise HTTPException(status_code=400, detail="El archivo está vacío")
 
     try:
-        created = await coordinacion_service.analizar_para_paciente(
+        created = await coordination_service.analyze_for_patient(
             doctor_user_id=current_user["id"],
             patient_user_id=patient_user_id,
             file_content=contents,
@@ -83,45 +83,45 @@ async def analizar_para_paciente(
         )
         return AnalysisResponse(
             id=created["id"],
-            result=created["resultado"],
-            confidence=created["confianza"],
-            image_url=created["imagen_original_url"],
+            result=created["result"],
+            confidence=created["confidence"],
+            image_url=created["image_url"],
             created_at=created["created_at"],
         )
     finally:
         await file.close()
 
 
-@router.post("/citas", response_model=AppointmentResponse)
-async def crear_cita(
+@router.post("/appointments", response_model=AppointmentResponse)
+async def create_appointment(
     payload: AppointmentCreateRequest,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.crear_cita(
+    return coordination_service.create_appointment(
         doctor_user_id=current_user["id"],
         patient_user_id=payload.patient_user_id,
-        titulo=payload.title,
-        fecha_hora=payload.date_time,
-        descripcion=payload.description,
+        title=payload.title,
+        date_time=payload.date_time,
+        description=payload.description,
     )
 
 
-@router.get("/citas", response_model=list[AppointmentResponse])
-async def listar_citas_doctor(
-    estado: str | None = None,
+@router.get("/appointments", response_model=list[AppointmentResponse])
+async def list_doctor_appointments(
+    status: str | None = None,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.listar_citas_doctor(current_user["id"], estado=estado)
+    return coordination_service.list_doctor_appointments(current_user["id"], status=status)
 
 
-@router.patch("/citas/{cita_id}/estado", response_model=AppointmentResponse)
-async def actualizar_estado_cita(
-    cita_id: str,
+@router.patch("/appointments/{appointment_id}/status", response_model=AppointmentResponse)
+async def update_appointment_status(
+    appointment_id: str,
     payload: AppointmentUpdateStatusRequest,
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
-    return coordinacion_service.actualizar_estado_cita_doctor(
+    return coordination_service.update_doctor_appointment_status(
         doctor_user_id=current_user["id"],
-        cita_id=cita_id,
-        estado=payload.status.value,
+        appointment_id=appointment_id,
+        status=payload.status.value,
     )

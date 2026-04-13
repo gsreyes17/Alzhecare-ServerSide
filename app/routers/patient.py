@@ -9,54 +9,54 @@ from app.schemas.coordinacion import (
     BindingResponderRequest,
     BindingResponse,
 )
-from app.services.coordinacion_service import coordinacion_service
+from app.services.coordinacion_service import coordination_service
 
 router = APIRouter(prefix="/api/patient", tags=["Patient"])
 
 
-@router.get("/solicitudes", response_model=list[BindingResponse])
-async def listar_solicitudes_pendientes(
+@router.get("/requests", response_model=list[BindingResponse])
+async def list_pending_requests(
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
-    return coordinacion_service.listar_solicitudes_pendientes_paciente(current_user["id"])
+    return coordination_service.list_pending_patient_requests(current_user["id"])
 
 
-@router.patch("/solicitudes/{request_id}", response_model=BindingResponse)
-async def responder_solicitud(
+@router.patch("/requests/{request_id}", response_model=BindingResponse)
+async def respond_request(
     request_id: str,
     payload: BindingResponderRequest,
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
-    return coordinacion_service.responder_solicitud_paciente(
+    return coordination_service.respond_patient_request(
         patient_user_id=current_user["id"],
         request_id=request_id,
-        accion=payload.action,
+        action=payload.action,
     )
 
 
-@router.get("/notificaciones", response_model=list[NotificationResponse])
-async def listar_notificaciones(
-    solo_no_leidas: bool = False,
+@router.get("/notifications", response_model=list[NotificationResponse])
+async def list_notifications(
+    unread_only: bool = False,
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
-    return coordinacion_service.listar_notificaciones_usuario(
+    return coordination_service.list_user_notifications(
         user_id=current_user["id"],
-        solo_no_leidas=solo_no_leidas,
+        unread_only=unread_only,
     )
 
 
-@router.patch("/notificaciones/{notification_id}/leida", response_model=NotificationMarkAsReadResponse)
-async def marcar_notificacion_leida(
+@router.patch("/notifications/{notification_id}/read", response_model=NotificationMarkAsReadResponse)
+async def mark_notification_as_read(
     notification_id: str,
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
-    ok = coordinacion_service.marcar_notificacion_leida(current_user["id"], notification_id)
+    ok = coordination_service.mark_notification_as_read(current_user["id"], notification_id)
     return NotificationMarkAsReadResponse(ok=ok)
 
 
-@router.get("/citas", response_model=list[AppointmentResponse])
-async def listar_citas_paciente(
-    estado: str | None = None,
+@router.get("/appointments", response_model=list[AppointmentResponse])
+async def list_patient_appointments(
+    status: str | None = None,
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
-    return coordinacion_service.listar_citas_paciente(current_user["id"], estado=estado)
+    return coordination_service.list_patient_appointments(current_user["id"], status=status)

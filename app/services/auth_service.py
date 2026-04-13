@@ -95,11 +95,11 @@ class AuthService:
 
         return self.user_repo.create(user_doc.model_dump(mode="json"))
 
-    def list_users(self, role: str | None = None, estado: bool | None = None, skip: int = 0, limit: int = 50) -> dict:
-        users = self.user_repo.list_users(role=role, estado=estado, skip=skip, limit=limit)
+    def list_users(self, role: str | None = None, status: bool | None = None, skip: int = 0, limit: int = 50) -> dict:
+        users = self.user_repo.list_users(role=role, status=status, skip=skip, limit=limit)
         return {
             "users": [self._serialize_user(user) for user in users],
-            "total": self.user_repo.count_users(role=role, estado=estado),
+            "total": self.user_repo.count_users(role=role, status=status),
         }
 
     def update_user(self, user_id: str, payload: AdminUpdateUserRequest) -> dict:
@@ -191,11 +191,13 @@ class AuthService:
             return
 
         settings = get_settings()
+        initial_admin_name = settings.initial_admin_name or settings.initial_admin_nombre
+        initial_admin_lastname = settings.initial_admin_lastname or settings.initial_admin_apellido
         required_values = [
             settings.initial_admin_username,
             settings.initial_admin_password,
-            settings.initial_admin_nombre,
-            settings.initial_admin_apellido,
+            initial_admin_name,
+            initial_admin_lastname,
             settings.initial_admin_email,
         ]
         if not all(required_values):
@@ -204,8 +206,8 @@ class AuthService:
         payload = AdminCreateUserRequest(
             username=settings.initial_admin_username,
             password=settings.initial_admin_password,
-            name=settings.initial_admin_nombre,
-            lastname=settings.initial_admin_apellido,
+            name=initial_admin_name,
+            lastname=initial_admin_lastname,
             email=settings.initial_admin_email,
             role=UserRole.admin,
         )
@@ -220,7 +222,7 @@ class AuthService:
                 headers={"WWW-Authenticate": "Bearer"},
             )
 
-        if not user.get("estado", True):
+        if not user.get("status", True):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Usuario inactivo",

@@ -29,24 +29,24 @@ class UserRepository:
         self,
         *,
         role: Optional[str] = None,
-        estado: Optional[bool] = None,
+        status: Optional[bool] = None,
         skip: int = 0,
         limit: int = 50,
     ) -> list[dict]:
         query: dict = {}
         if role is not None:
             query["role"] = role
-        if estado is not None:
-            query["estado"] = estado
+        if status is not None:
+            query["status"] = status
         cursor = self.collection.find(query).sort("created_at", -1).skip(skip).limit(limit)
         return list(cursor)
 
-    def count_users(self, *, role: Optional[str] = None, estado: Optional[bool] = None) -> int:
+    def count_users(self, *, role: Optional[str] = None, status: Optional[bool] = None) -> int:
         query: dict = {}
         if role is not None:
             query["role"] = role
-        if estado is not None:
-            query["estado"] = estado
+        if status is not None:
+            query["status"] = status
         return self.collection.count_documents(query)
 
     def update_by_id(self, user_id: str, payload: dict) -> Optional[dict]:
@@ -66,15 +66,15 @@ class UserRepository:
         created = self.collection.find_one({"_id": result.inserted_id})
         return created
 
-    def search_patients(self, texto: str, limit: int = 30) -> list[dict]:
+    def search_patients(self, query_text: str, limit: int = 30) -> list[dict]:
         query = {
             "role": "patient",
-            "estado": True,
+            "status": True,
             "$or": [
-                {"username": {"$regex": texto, "$options": "i"}},
-                {"nombre": {"$regex": texto, "$options": "i"}},
-                {"apellido": {"$regex": texto, "$options": "i"}},
-                {"email": {"$regex": texto, "$options": "i"}},
+                {"username": {"$regex": query_text, "$options": "i"}},
+                {"name": {"$regex": query_text, "$options": "i"}},
+                {"lastname": {"$regex": query_text, "$options": "i"}},
+                {"email": {"$regex": query_text, "$options": "i"}},
             ],
         }
         cursor = self.collection.find(query).sort("created_at", -1).limit(limit)

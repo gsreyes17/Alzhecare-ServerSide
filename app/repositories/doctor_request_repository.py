@@ -22,7 +22,7 @@ class DoctorRequestRepository:
             {
                 "doctor_user_id": doctor_user_id,
                 "patient_user_id": patient_user_id,
-                "estado": RequestStatus.pending.value,
+                "status": RequestStatus.pending.value,
             }
         )
 
@@ -34,7 +34,7 @@ class DoctorRequestRepository:
         cursor = self.collection.find(
             {
                 "patient_user_id": patient_user_id,
-                "estado": RequestStatus.pending.value,
+                "status": RequestStatus.pending.value,
             }
         ).sort("created_at", -1)
         return list(cursor)
@@ -46,10 +46,10 @@ class DoctorRequestRepository:
             return None
         return self.collection.find_one({"_id": oid, "patient_user_id": patient_user_id})
 
-    def update_status(self, request_id: str, estado: str, updated_at) -> Optional[dict]:
+    def update_status(self, request_id: str, status: str, updated_at) -> Optional[dict]:
         try:
             oid = ObjectId(request_id)
         except Exception:
             return None
-        self.collection.update_one({"_id": oid}, {"$set": {"estado": estado, "updated_at": updated_at}})
+        self.collection.update_one({"_id": oid}, {"$set": {"status": status, "updated_at": updated_at}})
         return self.collection.find_one({"_id": oid})

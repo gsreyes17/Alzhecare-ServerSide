@@ -5,7 +5,7 @@ from bson import ObjectId
 from app.db.mongo import get_analyses_collection
 
 
-class DiagnosticoRepository:
+class DiagnosisRepository:
     def __init__(self) -> None:
         self.collection = get_analyses_collection()
 
@@ -17,9 +17,9 @@ class DiagnosticoRepository:
         cursor = self.collection.find({"user_id": user_id}).sort("created_at", -1).limit(limit)
         return list(cursor)
 
-    def get_by_id_for_user(self, diagnostico_id: str, user_id: str) -> Optional[dict]:
+    def get_by_id_for_user(self, diagnosis_id: str, user_id: str) -> Optional[dict]:
         try:
-            oid = ObjectId(diagnostico_id)
+            oid = ObjectId(diagnosis_id)
         except Exception:
             return None
         return self.collection.find_one({"_id": oid, "user_id": user_id})

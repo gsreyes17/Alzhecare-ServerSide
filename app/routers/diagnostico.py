@@ -4,13 +4,13 @@ from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 
 from app.dependencies import get_current_active_user
 from app.schemas.diagnostico import AnalysisResponse, DiagnosisResponse
-from app.services.diagnostico_service import diagnostico_service
+from app.services.diagnostico_service import diagnosis_service
 
-router = APIRouter(prefix="/api/diagnosticos", tags=["Diagnosticos"])
+router = APIRouter(prefix="/api/diagnoses", tags=["Diagnoses"])
 
 
-@router.post("/analizar", response_model=AnalysisResponse)
-async def analizar_imagen(
+@router.post("/analyze", response_model=AnalysisResponse)
+async def analyze_image(
     file: UploadFile = File(...),
     current_user: dict = Depends(get_current_active_user),
 ) -> AnalysisResponse:
@@ -19,7 +19,7 @@ async def analizar_imagen(
         raise HTTPException(status_code=400, detail="El archivo está vacío")
 
     try:
-        created = await diagnostico_service.analizar(
+        created = await diagnosis_service.analyze(
             user_id=current_user["id"],
             file_content=contents,
             filename=file.filename,
@@ -35,20 +35,20 @@ async def analizar_imagen(
         await file.close()
 
 
-@router.get("/historial", response_model=Dict[str, Any])
-async def obtener_historial_diagnosticos(
+@router.get("/history", response_model=Dict[str, Any])
+async def get_diagnosis_history(
     limit: int = 50,
     current_user: dict = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
-    docs = diagnostico_service.historial(user_id=current_user["id"], limit=limit)
-    return {"diagnosticos": docs, "total": len(docs)}
+    docs = diagnosis_service.history(user_id=current_user["id"], limit=limit)
+    return {"diagnoses": docs, "total": len(docs)}
 
 
-@router.get("/mis-diagnosticos", response_model=List[DiagnosisResponse])
-async def obtener_mis_diagnosticos(
+@router.get("/my-diagnoses", response_model=List[DiagnosisResponse])
+async def get_my_diagnoses(
     current_user: dict = Depends(get_current_active_user),
 ) -> List[DiagnosisResponse]:
-    docs = diagnostico_service.historial(user_id=current_user["id"], limit=100)
+    docs = diagnosis_service.history(user_id=current_user["id"], limit=100)
     return [
         DiagnosisResponse(
             id=doc["id"],
@@ -63,23 +63,23 @@ async def obtener_mis_diagnosticos(
     ]
 
 
-@router.get("/detalle/{diagnostico_id}", response_model=Dict[str, Any])
-async def obtener_detalle_diagnostico(
-    diagnostico_id: str,
+@router.get("/detail/{diagnosis_id}", response_model=Dict[str, Any])
+async def get_diagnosis_detail(
+    diagnosis_id: str,
     current_user: dict = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
-    doc = diagnostico_service.detalle(user_id=current_user["id"], diagnostico_id=diagnostico_id)
+    doc = diagnosis_service.detail(user_id=current_user["id"], diagnosis_id=diagnosis_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Diagnóstico no encontrado")
     return doc
 
 
-@router.get("/{diagnostico_id}", response_model=DiagnosisResponse)
-async def obtener_diagnostico(
-    diagnostico_id: str,
+@router.get("/{diagnosis_id}", response_model=DiagnosisResponse)
+async def get_diagnosis(
+    diagnosis_id: str,
     current_user: dict = Depends(get_current_active_user),
 ) -> DiagnosisResponse:
-    doc = diagnostico_service.detalle(user_id=current_user["id"], diagnostico_id=diagnostico_id)
+    doc = diagnosis_service.detail(user_id=current_user["id"], diagnosis_id=diagnosis_id)
     if not doc:
         raise HTTPException(status_code=404, detail="Diagnóstico no encontrado")
 

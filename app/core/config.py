@@ -15,6 +15,8 @@ class Settings(BaseSettings):
     access_token_expire_minutes: int = 120
     initial_admin_username: str = ""
     initial_admin_password: str = ""
+    initial_admin_name: str = ""
+    initial_admin_lastname: str = ""
     initial_admin_nombre: str = ""
     initial_admin_apellido: str = ""
     initial_admin_email: str = ""
