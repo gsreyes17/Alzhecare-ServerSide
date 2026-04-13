@@ -61,7 +61,7 @@ class UserRepository:
         self.collection.update_one({"_id": oid}, {"$set": payload})
         return self.collection.find_one({"_id": oid})
 
-    def create(self, payload: dict) -> dict:
+    def create(self, payload: dict) -> Optional[dict]:
         result = self.collection.insert_one(payload)
         created = self.collection.find_one({"_id": result.inserted_id})
         return created

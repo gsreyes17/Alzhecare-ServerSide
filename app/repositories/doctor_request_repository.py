@@ -3,7 +3,7 @@ from typing import Optional
 from bson import ObjectId
 
 from app.db.mongo import get_doctor_requests_collection
-from app.schemas.coordinacion import EstadoSolicitud
+from app.schemas.coordinacion import RequestStatus
 
 
 class DoctorRequestRepository:
@@ -22,7 +22,7 @@ class DoctorRequestRepository:
             {
                 "doctor_user_id": doctor_user_id,
                 "patient_user_id": patient_user_id,
-                "estado": EstadoSolicitud.pendiente.value,
+                "estado": RequestStatus.pending.value,
             }
         )
 
@@ -34,7 +34,7 @@ class DoctorRequestRepository:
         cursor = self.collection.find(
             {
                 "patient_user_id": patient_user_id,
-                "estado": EstadoSolicitud.pendiente.value,
+                "estado": RequestStatus.pending.value,
             }
         ).sort("created_at", -1)
         return list(cursor)

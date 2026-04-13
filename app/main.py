@@ -39,6 +39,9 @@ async def read_items(token: Annotated[str, Depends(oauth2_scheme)]):
 def bootstrap_initial_admin() -> None:
     auth_service.ensure_initial_admin()
 
+@app.get("/")
+async def root() -> dict:
+    return {"message": "Bienvenido a la API de AlzheCare CNN"}
 
 @app.get("/health")
 async def health() -> dict:

@@ -29,11 +29,11 @@ async def create_user(
     return UserResponse(
         id=str(user["_id"]),
         username=user["username"],
-        nombre=user["nombre"],
-        apellido=user["apellido"],
+        name=user["nombre"],
+        lastname=user["apellido"],
         email=user["email"],
         role=user.get("role", UserRole.patient.value),
-        estado=user["estado"],
+        status=user["estado"],
         created_at=user["created_at"],
         updated_at=user["updated_at"],
     )
@@ -52,11 +52,11 @@ async def get_user(
     return UserResponse(
         id=user["id"],
         username=user["username"],
-        nombre=user["nombre"],
-        apellido=user["apellido"],
+        name=user["nombre"],
+        lastname=user["apellido"],
         email=user["email"],
         role=user.get("role", UserRole.patient.value),
-        estado=user["estado"],
+        status=user["estado"],
         created_at=user["created_at"],
         updated_at=user["updated_at"],
     )
@@ -72,11 +72,11 @@ async def update_user(
     return UserResponse(
         id=user["id"],
         username=user["username"],
-        nombre=user["nombre"],
-        apellido=user["apellido"],
+        name=user["nombre"],
+        lastname=user["apellido"],
         email=user["email"],
         role=user.get("role", UserRole.patient.value),
-        estado=user["estado"],
+        status=user["estado"],
         created_at=user["created_at"],
         updated_at=user["updated_at"],
     )

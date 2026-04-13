@@ -56,11 +56,11 @@ class AuthService:
         user_doc = UserDocument(
             username=payload.username,
             password_hash=get_password_hash(payload.password),
-            nombre=payload.nombre,
-            apellido=payload.apellido,
+            name=payload.name,
+            lastname=payload.lastname,
             email=payload.email,
             role=UserRole.patient,
-            estado=True,
+            status=True,
             created_at=now,
             updated_at=now,
         )
@@ -84,11 +84,11 @@ class AuthService:
         user_doc = UserDocument(
             username=payload.username,
             password_hash=get_password_hash(payload.password),
-            nombre=payload.nombre,
-            apellido=payload.apellido,
+            name=payload.name,
+            lastname=payload.lastname,
             email=payload.email,
             role=payload.role,
-            estado=True,
+            status=True,
             created_at=now,
             updated_at=now,
         )
@@ -204,8 +204,8 @@ class AuthService:
         payload = AdminCreateUserRequest(
             username=settings.initial_admin_username,
             password=settings.initial_admin_password,
-            nombre=settings.initial_admin_nombre,
-            apellido=settings.initial_admin_apellido,
+            name=settings.initial_admin_nombre,
+            lastname=settings.initial_admin_apellido,
             email=settings.initial_admin_email,
             role=UserRole.admin,
         )

@@ -6,16 +6,16 @@ from pydantic import BaseModel, EmailStr, Field, field_validator
 
 
 class UserRole(str, Enum):
-    patient = "patient"
+    patient = "paciente"
     doctor = "doctor"
     admin = "admin"
 
 
 class RegisterRequest(BaseModel):
     username: str = Field(min_length=3, max_length=40)
-    password: str = Field(min_length=6, max_length=128)
-    nombre: str = Field(min_length=1, max_length=80)
-    apellido: str = Field(min_length=1, max_length=80)
+    password: str = Field(min_length=6, max_length=40)
+    name: str = Field(min_length=1, max_length=80)
+    lastname: str = Field(min_length=1, max_length=80)
     email: EmailStr
 
 
@@ -31,16 +31,16 @@ class AdminCreateUserRequest(RegisterRequest):
 
 
 class AdminUpdateUserRequest(BaseModel):
-    nombre: Optional[str] = Field(default=None, min_length=1, max_length=80)
-    apellido: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    lastname: Optional[str] = Field(default=None, min_length=1, max_length=80)
     password: Optional[str] = Field(default=None, min_length=6, max_length=128)
-    estado: Optional[bool] = None
+    status: Optional[bool] = None
     role: Optional[UserRole] = None
 
 
 class UserProfileUpdateRequest(BaseModel):
-    nombre: Optional[str] = Field(default=None, min_length=1, max_length=80)
-    apellido: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    name: Optional[str] = Field(default=None, min_length=1, max_length=80)
+    lastname: Optional[str] = Field(default=None, min_length=1, max_length=80)
     email: Optional[EmailStr] = None
     password: Optional[str] = Field(default=None, min_length=6, max_length=128)
 
@@ -58,11 +58,11 @@ class Token(BaseModel):
 class UserResponse(BaseModel):
     id: str
     username: str
-    nombre: str
-    apellido: str
+    name: str
+    lastname: str
     email: EmailStr
     role: UserRole
-    estado: bool
+    status: bool
     profile_image_url: Optional[str] = None
     created_at: datetime
     updated_at: datetime
@@ -76,11 +76,11 @@ class UsersListResponse(BaseModel):
 class UserDocument(BaseModel):
     username: str
     password_hash: str
-    nombre: str
-    apellido: str
+    name: str
+    lastname: str
     email: EmailStr
     role: UserRole = UserRole.patient
-    estado: bool = True
+    status: bool = True
     created_at: datetime
     updated_at: datetime
 

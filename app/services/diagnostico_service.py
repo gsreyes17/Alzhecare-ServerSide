@@ -7,7 +7,7 @@ from fastapi import HTTPException
 from PIL import Image
 
 from app.repositories.diagnostico_repository import DiagnosticoRepository
-from app.schemas.diagnostico import DiagnosticoDocument
+from app.schemas.diagnostico import DiagnosisDocument
 from app.services.s3_service import s3_service
 from app.services.torch_service import torch_service
 
@@ -47,21 +47,22 @@ class DiagnosticoService:
             original_url = s3_service.sign_get_url(original_key)
 
             now = datetime.now(timezone.utc)
-            diagnostico_doc = DiagnosticoDocument(
+            diagnostico_doc = DiagnosisDocument(
                 user_id=user_id,
-                resultado=analysis["result_label"],
-                confianza=float(analysis["confidence"]),
-                clase_original=analysis["class_name"],
-                estado="completado",
-                imagen_original_s3_key=original_key,
-                imagen_original_url=original_url,
+                result=analysis["result_label"],
+                confidence=float(analysis["confidence"]),
+                status="completado",
+                image_s3_key=original_key,
+                image_url=original_url,
                 # Se mantiene el nombre por compatibilidad con datos históricos.
-                datos_roboflow=analysis.get("raw", {}),
+                model_output=analysis.get("raw", {}),
                 created_at=now,
                 updated_at=now,
             )
 
             created = self.repo.create(diagnostico_doc.model_dump())
+            if created is None:
+                raise HTTPException(status_code=500, detail="Error al crear el diagnóstico")
             created["id"] = str(created.pop("_id"))
             return created
         finally:

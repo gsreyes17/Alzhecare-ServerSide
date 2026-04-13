@@ -4,87 +4,87 @@ from enum import Enum
 from pydantic import BaseModel, Field
 
 
-class EstadoSolicitud(str, Enum):
-    pendiente = "pendiente"
-    aceptada = "aceptada"
-    denegada = "denegada"
+class RequestStatus(str, Enum):
+    pending = "pendiente"
+    accepted = "aceptada"
+    denied = "denegada"
 
 
-class EstadoCita(str, Enum):
-    programada = "programada"
-    efectuada = "efectuada"
-    cancelada = "cancelada"
+class AppointmentStatus(str, Enum):
+    scheduled = "programada"
+    done = "realizada"
+    canceled = "cancelada"
 
 
-class TipoNotificacion(str, Enum):
-    solicitud_medico = "solicitud_medico"
-    respuesta_solicitud = "respuesta_solicitud"
-    cita_programada = "cita_programada"
-    cita_actualizada = "cita_actualizada"
+class NotificationType(str, Enum):  
+    doctor_request = "solicitud_medico"
+    request_response = "respuesta_solicitud"
+    scheduled_appointment = "cita_programada"
+    updated_appointment = "cita_actualizada"
 
 
-class UsuarioBasicoResponse(BaseModel):
+class BasicUserResponse(BaseModel):
     id: str
     username: str
-    nombre: str
-    apellido: str
+    name: str
+    lastname: str
     email: str
 
 
-class SolicitudVinculacionCreateRequest(BaseModel):
+class BindingCreateRequest(BaseModel):
     patient_user_id: str
 
 
-class SolicitudVinculacionResponderRequest(BaseModel):
-    accion: str = Field(description="aceptar o denegar")
+class BindingResponderRequest(BaseModel):
+    action: str = Field(description="aceptar o denegar")
 
 
-class SolicitudVinculacionResponse(BaseModel):
+class BindingResponse(BaseModel):
     id: str
     doctor_user_id: str
     patient_user_id: str
-    doctor_nombre: str | None = None
-    patient_nombre: str | None = None
-    estado: EstadoSolicitud
+    doctor_name: str | None = None
+    patient_name: str | None = None
+    status: RequestStatus
     created_at: datetime
     updated_at: datetime
 
 
-class CitaCreateRequest(BaseModel):
+class AppointmentCreateRequest(BaseModel):
     patient_user_id: str
-    titulo: str = Field(min_length=1, max_length=120)
-    fecha_hora: datetime
-    descripcion: str = Field(min_length=1, max_length=500)
+    title: str = Field(min_length=1, max_length=120)
+    date_time: datetime
+    description: str = Field(min_length=1, max_length=500)
 
 
-class CitaUpdateEstadoRequest(BaseModel):
-    estado: EstadoCita
+class AppointmentUpdateStatusRequest(BaseModel):
+    status: AppointmentStatus
 
 
-class CitaResponse(BaseModel):
+class AppointmentResponse(BaseModel):
     id: str
     doctor_user_id: str
     patient_user_id: str
-    titulo: str
-    fecha_hora: datetime
-    descripcion: str
-    estado: EstadoCita
+    title: str
+    date_time: datetime
+    description: str
+    status: AppointmentStatus
     created_at: datetime
     updated_at: datetime
-    doctor_nombre: str | None = None
-    patient_nombre: str | None = None
+    doctor_name: str | None = None
+    patient_name: str | None = None
 
 
-class NotificacionResponse(BaseModel):
+class NotificationResponse(BaseModel):
     id: str
     user_id: str
-    tipo: TipoNotificacion
-    titulo: str
-    mensaje: str
+    type: NotificationType
+    title: str
+    message: str
     data: dict = Field(default_factory=dict)
-    leida: bool
+    read: bool
     created_at: datetime
 
 
-class NotificacionMarcarLeidaResponse(BaseModel):
+class NotificationMarkAsReadResponse(BaseModel):
     ok: bool

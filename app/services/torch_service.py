@@ -71,14 +71,9 @@ class TorchService:
         self.device = self._resolve_device(settings.torch_device)
 
         self.translations = {
-            "very mild demented": "Demencia muy leve",
             "very mild dementia": "Demencia muy leve",
-            "mild demented": "Demencia leve",
             "mild dementia": "Demencia leve",
-            "non demented": "Sin demencia",
             "non dementia": "Sin demencia",
-            "non-demented": "Sin demencia",
-            "moderate demented": "Demencia moderada",
             "moderate dementia": "Demencia moderada",
         }
 
@@ -155,7 +150,7 @@ class TorchService:
 
         try:
             image = Image.open(image_path).convert("RGB")
-            input_tensor = self.transform(image).unsqueeze(0).to(self.device)
+            input_tensor = self.transform(image).unsqueeze(0).to(self.device) # type: ignore
 
             with torch.no_grad():
                 output = self.model(input_tensor)
@@ -169,12 +164,14 @@ class TorchService:
 
             all_probabilities = probabilities.squeeze(0).detach().cpu().tolist()
             raw = {
-                "engine": "torch-local",
+                "engine": "torch-v1",
                 "device": str(self.device),
-                "model_path": str(self.model_path),
                 "predicted_index": idx,
                 "probabilities": [
-                    {"class_name": self.classes[i], "confidence": float(all_probabilities[i])}
+                    {
+                        "class_name": self.classes[i],
+                        "confidence": round(float(all_probabilities[i]), 6),
+                    }
                     for i in range(len(self.classes))
                 ],
             }

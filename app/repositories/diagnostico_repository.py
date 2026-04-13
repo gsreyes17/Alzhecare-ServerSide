@@ -9,7 +9,7 @@ class DiagnosticoRepository:
     def __init__(self) -> None:
         self.collection = get_analyses_collection()
 
-    def create(self, payload: dict) -> dict:
+    def create(self, payload: dict) -> Optional[dict]:
         result = self.collection.insert_one(payload)
         return self.collection.find_one({"_id": result.inserted_id})
 

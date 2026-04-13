@@ -8,7 +8,7 @@ from app.repositories.doctor_request_repository import DoctorRequestRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import UserRole
-from app.schemas.coordinacion import EstadoCita, EstadoSolicitud, TipoNotificacion
+from app.schemas.coordinacion import AppointmentStatus, RequestStatus, NotificationType
 from app.services.diagnostico_service import diagnostico_service
 
 
@@ -100,7 +100,7 @@ class CoordinacionService:
             {
                 "doctor_user_id": doctor_user_id,
                 "patient_user_id": patient_user_id,
-                "estado": EstadoSolicitud.pendiente.value,
+                "estado": RequestStatus.pending.value,
                 "created_at": now,
                 "updated_at": now,
             }
@@ -112,7 +112,7 @@ class CoordinacionService:
         self.notification_repo.create(
             {
                 "user_id": patient_user_id,
-                "tipo": TipoNotificacion.solicitud_medico.value,
+                "tipo": NotificationType.doctor_request.value,
                 "titulo": "Nueva solicitud médica",
                 "mensaje": f"{doctor_name} solicita vincularse como tu doctor.",
                 "data": {"request_id": str(created["_id"]), "doctor_user_id": doctor_user_id},
@@ -158,7 +158,7 @@ class CoordinacionService:
                 "titulo": titulo.strip(),
                 "fecha_hora": fecha_hora,
                 "descripcion": descripcion,
-                "estado": EstadoCita.programada.value,
+                "estado": AppointmentStatus.scheduled.value,
                 "created_at": now,
                 "updated_at": now,
             }
@@ -170,7 +170,7 @@ class CoordinacionService:
         self.notification_repo.create(
             {
                 "user_id": patient_user_id,
-                "tipo": TipoNotificacion.cita_programada.value,
+                "tipo": NotificationType.scheduled_appointment.value,
                 "titulo": titulo.strip(),
                 "mensaje": f"{doctor_name} programo la cita \"{titulo.strip()}\" para {fecha_hora}.",
                 "data": {
@@ -204,7 +204,7 @@ class CoordinacionService:
         self.notification_repo.create(
             {
                 "user_id": updated["patient_user_id"],
-                "tipo": TipoNotificacion.cita_actualizada.value,
+                "tipo": NotificationType.updated_appointment.value,
                 "titulo": updated.get("titulo") or "Cita actualizada",
                 "mensaje": f"La cita \"{updated.get('titulo') or 'Cita medica'}\" cambio a estado: {estado}.",
                 "data": {
@@ -229,11 +229,11 @@ class CoordinacionService:
         if not request_doc:
             raise HTTPException(status_code=404, detail="Solicitud no encontrada")
 
-        if request_doc.get("estado") != EstadoSolicitud.pendiente.value:
+        if request_doc.get("estado") != RequestStatus.pending.value:
             raise HTTPException(status_code=400, detail="La solicitud ya fue procesada")
 
         now = datetime.now(timezone.utc)
-        nuevo_estado = EstadoSolicitud.aceptada.value if accion == "aceptar" else EstadoSolicitud.denegada.value
+        nuevo_estado = RequestStatus.accepted.value if accion == "aceptar" else RequestStatus.denied.value
         updated = self.request_repo.update_status(request_id, nuevo_estado, now)
         if not updated:
             raise HTTPException(status_code=404, detail="Solicitud no encontrada")
@@ -252,7 +252,7 @@ class CoordinacionService:
         self.notification_repo.create(
             {
                 "user_id": updated["doctor_user_id"],
-                "tipo": TipoNotificacion.respuesta_solicitud.value,
+                "tipo": NotificationType.request_response.value,
                 "titulo": "Respuesta de solicitud",
                 "mensaje": f"El paciente ha {accion}do tu solicitud.",
                 "data": {"request_id": str(updated["_id"]), "estado": nuevo_estado},
@@ -288,7 +288,7 @@ class CoordinacionService:
         self.notification_repo.create(
             {
                 "user_id": updated["patient_user_id"],
-                "tipo": TipoNotificacion.cita_actualizada.value,
+                "tipo": NotificationType.updated_appointment.value,
                 "titulo": updated.get("titulo") or "Cita actualizada por administracion",
                 "mensaje": f"La cita \"{updated.get('titulo') or 'Cita medica'}\" cambio a estado: {estado}.",
                 "data": {
