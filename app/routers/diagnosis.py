@@ -1,10 +1,10 @@
 from typing import Any, Dict, List
 
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from app.dependencies import get_current_active_user
-from app.schemas.diagnostico import AnalysisResponse, DiagnosisResponse
-from app.services.diagnostico_service import diagnosis_service
+from app.schemas.diagnosis import AnalysisResponse, DiagnosisResponse
+from app.services.diagnosis_service import diagnosis_service
 
 router = APIRouter(prefix="/api/diagnoses", tags=["Diagnoses"])
 
@@ -37,7 +37,7 @@ async def analyze_image(
 
 @router.get("/history", response_model=Dict[str, Any])
 async def get_diagnosis_history(
-    limit: int = 50,
+    limit: int = Query(default=50, ge=1, le=200),
     current_user: dict = Depends(get_current_active_user),
 ) -> Dict[str, Any]:
     docs = diagnosis_service.history(user_id=current_user["id"], limit=limit)

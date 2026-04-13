@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+import logging
 
 from fastapi import HTTPException
 
@@ -8,12 +9,13 @@ from app.repositories.doctor_request_repository import DoctorRequestRepository
 from app.repositories.notification_repository import NotificationRepository
 from app.repositories.user_repository import UserRepository
 from app.schemas.auth import UserRole
-from app.schemas.coordinacion import AppointmentStatus, NotificationType, RequestStatus
-from app.services.diagnostico_service import diagnosis_service
+from app.schemas.coordination import AppointmentStatus, NotificationType, RequestStatus
+from app.services.diagnosis_service import diagnosis_service
 
 
 class CoordinationService:
     def __init__(self) -> None:
+        self.logger = logging.getLogger(__name__)
         self.user_repo = UserRepository()
         self.request_repo = DoctorRequestRepository()
         self.link_repo = DoctorPatientRepository()
@@ -109,17 +111,20 @@ class CoordinationService:
         doctor = self.user_repo.get_by_id(doctor_user_id)
         doctor_name = doctor.get("name", "Doctor") if doctor else "Doctor"
 
-        self.notification_repo.create(
-            {
-                "user_id": patient_user_id,
-                "type": NotificationType.doctor_request.value,
-                "title": "Nueva solicitud medica",
-                "message": f"{doctor_name} solicita vincularse como tu doctor.",
-                "data": {"request_id": str(created["_id"]), "doctor_user_id": doctor_user_id},
-                "read": False,
-                "created_at": now,
-            }
-        )
+        try:
+            self.notification_repo.create(
+                {
+                    "user_id": patient_user_id,
+                    "type": NotificationType.doctor_request.value,
+                    "title": "Nueva solicitud medica",
+                    "message": f"{doctor_name} solicita vincularse como tu doctor.",
+                    "data": {"request_id": str(created["_id"]), "doctor_user_id": doctor_user_id},
+                    "read": False,
+                    "created_at": now,
+                }
+            )
+        except Exception:
+            self.logger.exception("No se pudo crear notificacion de solicitud medica")
         return self._serialize_request(created)
 
     def list_doctor_requests(self, doctor_user_id: str) -> list[dict]:
@@ -185,21 +190,24 @@ class CoordinationService:
         doctor = self.user_repo.get_by_id(doctor_user_id)
         doctor_name = doctor.get("name", "Doctor") if doctor else "Doctor"
 
-        self.notification_repo.create(
-            {
-                "user_id": patient_user_id,
-                "type": NotificationType.scheduled_appointment.value,
-                "title": title.strip(),
-                "message": f"{doctor_name} programo la cita \"{title.strip()}\" para {date_time}.",
-                "data": {
-                    "appointment_id": str(created["_id"]),
+        try:
+            self.notification_repo.create(
+                {
+                    "user_id": patient_user_id,
+                    "type": NotificationType.scheduled_appointment.value,
                     "title": title.strip(),
-                    "doctor_user_id": doctor_user_id,
-                },
-                "read": False,
-                "created_at": now,
-            }
-        )
+                    "message": f"{doctor_name} programo la cita \"{title.strip()}\" para {date_time}.",
+                    "data": {
+                        "appointment_id": str(created["_id"]),
+                        "title": title.strip(),
+                        "doctor_user_id": doctor_user_id,
+                    },
+                    "read": False,
+                    "created_at": now,
+                }
+            )
+        except Exception:
+            self.logger.exception("No se pudo crear notificacion de cita programada")
         return self._serialize_appointment(created)
 
     def list_doctor_appointments(self, doctor_user_id: str, status: str | None = None) -> list[dict]:
@@ -219,20 +227,23 @@ class CoordinationService:
         if not updated:
             raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-        self.notification_repo.create(
-            {
-                "user_id": updated["patient_user_id"],
-                "type": NotificationType.updated_appointment.value,
-                "title": updated.get("title") or "Cita actualizada",
-                "message": f"La cita \"{updated.get('title') or 'Cita medica'}\" cambio a estado: {status}.",
-                "data": {
-                    "appointment_id": str(updated["_id"]),
-                    "title": updated.get("title") or "Cita medica",
-                },
-                "read": False,
-                "created_at": datetime.now(timezone.utc),
-            }
-        )
+        try:
+            self.notification_repo.create(
+                {
+                    "user_id": updated["patient_user_id"],
+                    "type": NotificationType.updated_appointment.value,
+                    "title": updated.get("title") or "Cita actualizada",
+                    "message": f"La cita \"{updated.get('title') or 'Cita medica'}\" cambio a estado: {status}.",
+                    "data": {
+                        "appointment_id": str(updated["_id"]),
+                        "title": updated.get("title") or "Cita medica",
+                    },
+                    "read": False,
+                    "created_at": datetime.now(timezone.utc),
+                }
+            )
+        except Exception:
+            self.logger.exception("No se pudo crear notificacion de cita actualizada por doctor")
         return self._serialize_appointment(updated)
 
     def list_pending_patient_requests(self, patient_user_id: str) -> list[dict]:
@@ -267,17 +278,20 @@ class CoordinationService:
                 }
             )
 
-        self.notification_repo.create(
-            {
-                "user_id": updated["doctor_user_id"],
-                "type": NotificationType.request_response.value,
-                "title": "Respuesta de solicitud",
-                "message": f"El paciente ha {action}do tu solicitud.",
-                "data": {"request_id": str(updated["_id"]), "status": new_status},
-                "read": False,
-                "created_at": now,
-            }
-        )
+        try:
+            self.notification_repo.create(
+                {
+                    "user_id": updated["doctor_user_id"],
+                    "type": NotificationType.request_response.value,
+                    "title": "Respuesta de solicitud",
+                    "message": f"El paciente ha {action}do tu solicitud.",
+                    "data": {"request_id": str(updated["_id"]), "status": new_status},
+                    "read": False,
+                    "created_at": now,
+                }
+            )
+        except Exception:
+            self.logger.exception("No se pudo crear notificacion de respuesta de solicitud")
         return self._serialize_request(updated)
 
     def list_user_notifications(self, user_id: str, unread_only: bool = False) -> list[dict]:
@@ -303,21 +317,24 @@ class CoordinationService:
         if not updated:
             raise HTTPException(status_code=404, detail="Cita no encontrada")
 
-        self.notification_repo.create(
-            {
-                "user_id": updated["patient_user_id"],
-                "type": NotificationType.updated_appointment.value,
-                "title": updated.get("title") or "Cita actualizada por administracion",
-                "message": f"La cita \"{updated.get('title') or 'Cita medica'}\" cambio a estado: {status}.",
-                "data": {
-                    "appointment_id": str(updated["_id"]),
-                    "title": updated.get("title") or "Cita medica",
-                    "status": status,
-                },
-                "read": False,
-                "created_at": datetime.now(timezone.utc),
-            }
-        )
+        try:
+            self.notification_repo.create(
+                {
+                    "user_id": updated["patient_user_id"],
+                    "type": NotificationType.updated_appointment.value,
+                    "title": updated.get("title") or "Cita actualizada por administracion",
+                    "message": f"La cita \"{updated.get('title') or 'Cita medica'}\" cambio a estado: {status}.",
+                    "data": {
+                        "appointment_id": str(updated["_id"]),
+                        "title": updated.get("title") or "Cita medica",
+                        "status": status,
+                    },
+                    "read": False,
+                    "created_at": datetime.now(timezone.utc),
+                }
+            )
+        except Exception:
+            self.logger.exception("No se pudo crear notificacion de cita actualizada por admin")
         return self._serialize_appointment(updated)
 
 

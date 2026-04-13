@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 
 from fastapi import HTTPException, status
+from botocore.exceptions import BotoCoreError, ClientError
 
 from app.core.config import get_settings
 from app.core.security import create_access_token, get_password_hash, verify_password
@@ -65,7 +66,10 @@ class AuthService:
             updated_at=now,
         )
 
-        return self.user_repo.create(user_doc.model_dump(mode="json"))
+        created = self.user_repo.create(user_doc.model_dump(mode="json"))
+        if not created:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario")
+        return created
 
     def create_user(self, payload: AdminCreateUserRequest) -> dict:
         if self.user_repo.get_by_username(payload.username):
@@ -93,7 +97,10 @@ class AuthService:
             updated_at=now,
         )
 
-        return self.user_repo.create(user_doc.model_dump(mode="json"))
+        created = self.user_repo.create(user_doc.model_dump(mode="json"))
+        if not created:
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Error al crear el usuario")
+        return created
 
     def list_users(self, role: str | None = None, status: bool | None = None, skip: int = 0, limit: int = 50) -> dict:
         users = self.user_repo.list_users(role=role, status=status, skip=skip, limit=limit)
@@ -167,13 +174,19 @@ class AuthService:
         if not user:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
 
-        optimized = s3_service.optimize_profile_image(image_content)
-        key = s3_service.upload_image(
-            data=optimized,
-            filename=filename,
-            content_type="image/jpeg",
-            folder=s3_service.profile_base_path,
-        )
+        try:
+            optimized = s3_service.optimize_profile_image(image_content)
+            key = s3_service.upload_image(
+                data=optimized,
+                filename=filename,
+                content_type="image/jpeg",
+                folder=s3_service.profile_base_path,
+            )
+        except (BotoCoreError, ClientError) as exc:
+            raise HTTPException(
+                status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+                detail="Servicio de almacenamiento no disponible",
+            ) from exc
 
         updated = self.user_repo.update_by_id(
             user_id,
@@ -185,33 +198,6 @@ class AuthService:
         if not updated:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado")
         return self._serialize_user(updated)
-
-    def ensure_initial_admin(self) -> None:
-        if self.user_repo.get_by_role(UserRole.admin.value):
-            return
-
-        settings = get_settings()
-        initial_admin_name = settings.initial_admin_name or settings.initial_admin_nombre
-        initial_admin_lastname = settings.initial_admin_lastname or settings.initial_admin_apellido
-        required_values = [
-            settings.initial_admin_username,
-            settings.initial_admin_password,
-            initial_admin_name,
-            initial_admin_lastname,
-            settings.initial_admin_email,
-        ]
-        if not all(required_values):
-            return
-
-        payload = AdminCreateUserRequest(
-            username=settings.initial_admin_username,
-            password=settings.initial_admin_password,
-            name=initial_admin_name,
-            lastname=initial_admin_lastname,
-            email=settings.initial_admin_email,
-            role=UserRole.admin,
-        )
-        self.create_user(payload)
 
     def login(self, payload: LoginRequest) -> Token:
         user = self.user_repo.get_by_username(payload.username)

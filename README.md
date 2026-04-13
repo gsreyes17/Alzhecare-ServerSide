@@ -1,113 +1,57 @@
+# Guia Rapida: levantar FastAPI con uv
 
-.\run.ps1
+Esta guia es corta y practica para ejecutar el backend `python_alzhecare_cnn` con `uv`.
 
-# Alzhecare Server API
+## Requisitos
 
-Proyecto simple con mejor arquitectura por capas para:
+- Python 3.13+
+- uv instalado
 
-- Analizar imagenes con un modelo local de PyTorch
-- Guardar imagenes en AWS S3
-- Generar URLs firmadas (presigned URLs)
-- Guardar resultados en MongoDB
-- Registrar y autenticar usuarios con JWT
-- Gestion avanzada de usuarios por roles
-- El analisis solo persiste la imagen original; no se genera imagen procesada
+Instalar uv (si no lo tienes):
 
-## 1) Estructura
-
-```
-alzhecare_server/
-  app/
-    core/
-      config.py
-      security.py
-    db/
-      mongo.py
-    repositories/
-      user_repository.py
-      diagnostico_repository.py
-    routers/
-      auth.py
-      diagnostico.py
-      admin_users.py
-    schemas/
-      auth.py
-      diagnostico.py
-    services/
-      auth_service.py
-      diagnostico_service.py
-      torch_service.py
-      s3_service.py
-    dependencies.py
-    main.py
-  .env.example
-  requirements.txt
+```powershell
+pip install uv
 ```
 
-## 2) Instalacion
+## 1) Sincronizar dependencias
 
-```bash
-python -m venv .venv
-.venv\Scripts\activate
-pip install -e .
+```powershell
+uv sync
 ```
 
-## 3) Configuracion
+## 2) Configurar entorno
 
 1. Copia `.env.example` a `.env`
-2. Completa tus credenciales y valores:
+2. Ajusta al menos estas variables:
 
-- `TORCH_MODEL_PATH`
-- `TORCH_LABEL_CLASSES_PATH`
-- `TORCH_DEVICE` (`auto`, `cpu`, `cuda`)
+- `SECRET_KEY` (minimo 24 caracteres)
+- `DATABASE_URL`
+- `CORS_ALLOW_ORIGINS` (por ejemplo `http://localhost:3000,http://localhost:5173`)
+
+Si usaras analisis y fotos:
+
 - `AWS_ACCESS_KEY_ID`
 - `AWS_SECRET_ACCESS_KEY`
 - `AWS_S3_BUCKET`
-- `MONGODB_URI`
-- `SECRET_KEY`
-- `INITIAL_ADMIN_USERNAME`
-- `INITIAL_ADMIN_PASSWORD`
-- `INITIAL_ADMIN_NOMBRE`
-- `INITIAL_ADMIN_APELLIDO`
-- `INITIAL_ADMIN_EMAIL`
 
-## 4) Ejecutar
+Si usaras el modelo Torch:
 
-```bash
-uvicorn app.main:app --reload --port 8010
+- `TORCH_MODEL_PATH`
+- `TORCH_LABEL_CLASSES_PATH`
+
+## 3) Ejecutar la API
+
+```powershell
+uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
 ```
 
-## 5) Endpoints
+## 4) Verificar que esta arriba
 
-- `GET /health`
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `POST /api/auth/login/form`
-- `GET /api/auth/me`
-- `GET /api/admin/users`
-- `POST /api/admin/users`
-- `PATCH /api/admin/users/{user_id}`
-- `POST /api/diagnosticos/analizar` (form-data con campo `file`)
-- `GET /api/diagnosticos/historial`
-- `GET /api/diagnosticos/mis-diagnosticos`
-- `GET /api/diagnosticos/detalle/{diagnostico_id}`
-- `GET /api/diagnosticos/{diagnostico_id}`
+- Health: `GET http://localhost:8010/health`
+- Docs Swagger: `http://localhost:8010/docs`
 
-## 6) Flujo de `POST /api/diagnosticos/analizar`
+## Errores comunes
 
-1. Recibe imagen
-2. Valida formato
-3. Ejecuta inferencia local con modelo Torch
-4. Sube imagen original a S3
-5. Genera URLs firmadas
-6. Guarda metadata en MongoDB
-7. Retorna resultado de analisis
-
-## 7) Notas de autenticacion
-
-- Usa el token retornado por login en `Authorization: Bearer <token>`
-- Los endpoints de diagnostico requieren autenticacion
-- El registro publico crea pacientes
-- La cuenta admin inicial se crea al arrancar la app si se configuran las variables `INITIAL_ADMIN_*`
-- Solo un usuario con rol `admin` puede gestionar usuarios y crear doctores o nuevos administradores
-- Para desarrollo en Windows usa `run.ps1` para guardar el bytecode fuera de `app`
+- `503 Base de datos no disponible`: revisar `DATABASE_URL`, red y credenciales.
+- `503 Servicio de almacenamiento no disponible`: revisar variables AWS/S3.
+- Error al arrancar por `SECRET_KEY`: definir una clave robusta en `.env`.

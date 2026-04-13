@@ -1,15 +1,15 @@
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 
 from app.dependencies import require_roles
 from app.schemas.auth import UserRole
-from app.schemas.coordinacion import (
+from app.schemas.coordination import (
     AppointmentResponse,
     NotificationMarkAsReadResponse,
     NotificationResponse,
     BindingResponderRequest,
     BindingResponse,
 )
-from app.services.coordinacion_service import coordination_service
+from app.services.coordination_service import coordination_service
 
 router = APIRouter(prefix="/api/patient", tags=["Patient"])
 
@@ -56,7 +56,7 @@ async def mark_notification_as_read(
 
 @router.get("/appointments", response_model=list[AppointmentResponse])
 async def list_patient_appointments(
-    status: str | None = None,
+    status: str | None = Query(default=None, pattern="^(programada|realizada|cancelada)$"),
     current_user: dict = Depends(require_roles(UserRole.patient.value)),
 ):
     return coordination_service.list_patient_appointments(current_user["id"], status=status)

@@ -1,16 +1,22 @@
--- Normalized relational schema for AlzheCare backend
--- Keeps business status values in Spanish as requested.
+-- Base de datos normalizada para la aplicación Alzhecare API
+-- Este script crea las tablas necesarias para la aplicación, con relaciones normalizadas y restricciones adecuadas
 
-CREATE TABLE user_roles (
+CREATE TABLE IF NOT EXISTS user_roles (
     id SMALLSERIAL PRIMARY KEY,
     code VARCHAR(20) NOT NULL UNIQUE
 );
 
-INSERT INTO user_roles (code) VALUES ('paciente');
-INSERT INTO user_roles (code) VALUES ('doctor');
-INSERT INTO user_roles (code) VALUES ('admin');
+INSERT INTO user_roles (code)
+SELECT 'paciente'
+WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE code = 'paciente');
+INSERT INTO user_roles (code)
+SELECT 'doctor'
+WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE code = 'doctor');
+INSERT INTO user_roles (code)
+SELECT 'admin'
+WHERE NOT EXISTS (SELECT 1 FROM user_roles WHERE code = 'admin');
 
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
     id CHAR(36) PRIMARY KEY,
     username VARCHAR(40) NOT NULL UNIQUE,
     password_hash VARCHAR(255) NOT NULL,
@@ -24,14 +30,18 @@ CREATE TABLE users (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE TABLE diagnosis_statuses (
+CREATE TABLE IF NOT EXISTS diagnosis_statuses (
     code VARCHAR(20) PRIMARY KEY
 );
 
-INSERT INTO diagnosis_statuses (code) VALUES ('completado');
-INSERT INTO diagnosis_statuses (code) VALUES ('pendiente');
+INSERT INTO diagnosis_statuses (code)
+SELECT 'completado'
+WHERE NOT EXISTS (SELECT 1 FROM diagnosis_statuses WHERE code = 'completado');
+INSERT INTO diagnosis_statuses (code)
+SELECT 'pendiente'
+WHERE NOT EXISTS (SELECT 1 FROM diagnosis_statuses WHERE code = 'pendiente');
 
-CREATE TABLE diagnoses (
+CREATE TABLE IF NOT EXISTS diagnoses (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     result VARCHAR(120) NOT NULL,
@@ -44,15 +54,17 @@ CREATE TABLE diagnoses (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_diagnoses_user_created_at ON diagnoses(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_diagnoses_user_created_at ON diagnoses(user_id, created_at DESC);
 
-CREATE TABLE doctor_patient_link_statuses (
+CREATE TABLE IF NOT EXISTS doctor_patient_link_statuses (
     code VARCHAR(20) PRIMARY KEY
 );
 
-INSERT INTO doctor_patient_link_statuses (code) VALUES ('activo');
+INSERT INTO doctor_patient_link_statuses (code)
+SELECT 'activo'
+WHERE NOT EXISTS (SELECT 1 FROM doctor_patient_link_statuses WHERE code = 'activo');
 
-CREATE TABLE doctor_patient_links (
+CREATE TABLE IF NOT EXISTS doctor_patient_links (
     id CHAR(36) PRIMARY KEY,
     doctor_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     patient_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -62,18 +74,24 @@ CREATE TABLE doctor_patient_links (
     UNIQUE (doctor_user_id, patient_user_id)
 );
 
-CREATE INDEX idx_doctor_patient_links_doctor ON doctor_patient_links(doctor_user_id);
-CREATE INDEX idx_doctor_patient_links_patient ON doctor_patient_links(patient_user_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_patient_links_doctor ON doctor_patient_links(doctor_user_id);
+CREATE INDEX IF NOT EXISTS idx_doctor_patient_links_patient ON doctor_patient_links(patient_user_id);
 
-CREATE TABLE doctor_request_statuses (
+CREATE TABLE IF NOT EXISTS doctor_request_statuses (
     code VARCHAR(20) PRIMARY KEY
 );
 
-INSERT INTO doctor_request_statuses (code) VALUES ('pendiente');
-INSERT INTO doctor_request_statuses (code) VALUES ('aceptada');
-INSERT INTO doctor_request_statuses (code) VALUES ('denegada');
+INSERT INTO doctor_request_statuses (code)
+SELECT 'pendiente'
+WHERE NOT EXISTS (SELECT 1 FROM doctor_request_statuses WHERE code = 'pendiente');
+INSERT INTO doctor_request_statuses (code)
+SELECT 'aceptada'
+WHERE NOT EXISTS (SELECT 1 FROM doctor_request_statuses WHERE code = 'aceptada');
+INSERT INTO doctor_request_statuses (code)
+SELECT 'denegada'
+WHERE NOT EXISTS (SELECT 1 FROM doctor_request_statuses WHERE code = 'denegada');
 
-CREATE TABLE doctor_requests (
+CREATE TABLE IF NOT EXISTS doctor_requests (
     id CHAR(36) PRIMARY KEY,
     doctor_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     patient_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -82,18 +100,24 @@ CREATE TABLE doctor_requests (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_doctor_requests_doctor_created ON doctor_requests(doctor_user_id, created_at DESC);
-CREATE INDEX idx_doctor_requests_patient_status_created ON doctor_requests(patient_user_id, status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_doctor_requests_doctor_created ON doctor_requests(doctor_user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_doctor_requests_patient_status_created ON doctor_requests(patient_user_id, status, created_at DESC);
 
-CREATE TABLE appointment_statuses (
+CREATE TABLE IF NOT EXISTS appointment_statuses (
     code VARCHAR(20) PRIMARY KEY
 );
 
-INSERT INTO appointment_statuses (code) VALUES ('programada');
-INSERT INTO appointment_statuses (code) VALUES ('realizada');
-INSERT INTO appointment_statuses (code) VALUES ('cancelada');
+INSERT INTO appointment_statuses (code)
+SELECT 'programada'
+WHERE NOT EXISTS (SELECT 1 FROM appointment_statuses WHERE code = 'programada');
+INSERT INTO appointment_statuses (code)
+SELECT 'realizada'
+WHERE NOT EXISTS (SELECT 1 FROM appointment_statuses WHERE code = 'realizada');
+INSERT INTO appointment_statuses (code)
+SELECT 'cancelada'
+WHERE NOT EXISTS (SELECT 1 FROM appointment_statuses WHERE code = 'cancelada');
 
-CREATE TABLE appointments (
+CREATE TABLE IF NOT EXISTS appointments (
     id CHAR(36) PRIMARY KEY,
     doctor_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     patient_user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -105,20 +129,28 @@ CREATE TABLE appointments (
     updated_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_appointments_doctor_date ON appointments(doctor_user_id, date_time DESC);
-CREATE INDEX idx_appointments_patient_date ON appointments(patient_user_id, date_time DESC);
-CREATE INDEX idx_appointments_status_created ON appointments(status, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_doctor_date ON appointments(doctor_user_id, date_time DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_patient_date ON appointments(patient_user_id, date_time DESC);
+CREATE INDEX IF NOT EXISTS idx_appointments_status_created ON appointments(status, created_at DESC);
 
-CREATE TABLE notification_types (
+CREATE TABLE IF NOT EXISTS notification_types (
     code VARCHAR(40) PRIMARY KEY
 );
 
-INSERT INTO notification_types (code) VALUES ('solicitud_medico');
-INSERT INTO notification_types (code) VALUES ('respuesta_solicitud');
-INSERT INTO notification_types (code) VALUES ('cita_programada');
-INSERT INTO notification_types (code) VALUES ('cita_actualizada');
+INSERT INTO notification_types (code)
+SELECT 'solicitud_medico'
+WHERE NOT EXISTS (SELECT 1 FROM notification_types WHERE code = 'solicitud_medico');
+INSERT INTO notification_types (code)
+SELECT 'respuesta_solicitud'
+WHERE NOT EXISTS (SELECT 1 FROM notification_types WHERE code = 'respuesta_solicitud');
+INSERT INTO notification_types (code)
+SELECT 'cita_programada'
+WHERE NOT EXISTS (SELECT 1 FROM notification_types WHERE code = 'cita_programada');
+INSERT INTO notification_types (code)
+SELECT 'cita_actualizada'
+WHERE NOT EXISTS (SELECT 1 FROM notification_types WHERE code = 'cita_actualizada');
 
-CREATE TABLE notifications (
+CREATE TABLE IF NOT EXISTS notifications (
     id CHAR(36) PRIMARY KEY,
     user_id CHAR(36) NOT NULL REFERENCES users(id) ON DELETE CASCADE,
     type VARCHAR(40) NOT NULL REFERENCES notification_types(code),
@@ -129,5 +161,5 @@ CREATE TABLE notifications (
     created_at TIMESTAMPTZ NOT NULL
 );
 
-CREATE INDEX idx_notifications_user_created ON notifications(user_id, created_at DESC);
-CREATE INDEX idx_notifications_user_unread ON notifications(user_id, read);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_created ON notifications(user_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON notifications(user_id, read);

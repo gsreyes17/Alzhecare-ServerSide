@@ -4,10 +4,11 @@ import tempfile
 from datetime import datetime, timezone
 
 from fastapi import HTTPException
+from botocore.exceptions import BotoCoreError, ClientError
 from PIL import Image
 
 from app.repositories.diagnostico_repository import DiagnosisRepository
-from app.schemas.diagnostico import DiagnosisDocument
+from app.schemas.diagnosis import DiagnosisDocument
 from app.services.s3_service import s3_service
 from app.services.torch_service import torch_service
 
@@ -43,8 +44,14 @@ class DiagnosisService:
             analysis = await torch_service.analyze_image(temp_path)
 
             base_name = filename or "image.jpg"
-            original_key = s3_service.upload_image(file_content, f"original_{base_name}")
-            original_url = s3_service.sign_get_url(original_key)
+            try:
+                original_key = s3_service.upload_image(file_content, f"original_{base_name}")
+                original_url = s3_service.sign_get_url(original_key)
+            except (BotoCoreError, ClientError) as exc:
+                raise HTTPException(
+                    status_code=503,
+                    detail="Servicio de almacenamiento no disponible",
+                ) from exc
 
             now = datetime.now(timezone.utc)
             diagnosis_doc = DiagnosisDocument(
@@ -66,7 +73,11 @@ class DiagnosisService:
             return created
         finally:
             if temp_path and os.path.exists(temp_path):
-                os.remove(temp_path)
+                try:
+                    os.remove(temp_path)
+                except OSError:
+                    # Cleanup must not mask the original business outcome.
+                    pass
 
     def history(self, user_id: str, limit: int = 50) -> list[dict]:
         docs = self.repo.list_by_user(user_id=user_id, limit=limit)

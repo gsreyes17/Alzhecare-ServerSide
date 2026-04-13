@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -8,18 +9,11 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 
     app_name: str = "Alzhecare API"
-    debug: bool = True
+    debug: bool = False
 
     secret_key: str = ""
     algorithm: str = "HS256"
     access_token_expire_minutes: int = 120
-    initial_admin_username: str = ""
-    initial_admin_password: str = ""
-    initial_admin_name: str = ""
-    initial_admin_lastname: str = ""
-    initial_admin_nombre: str = ""
-    initial_admin_apellido: str = ""
-    initial_admin_email: str = ""
 
     torch_model_path: str = str(Path("app") / "models" / "v1" / "alzheimer_ensemble_v1.pth")
     torch_label_classes_path: str = str(Path("app") / "models" / "v1" / "le_classes.pkl")
@@ -32,15 +26,46 @@ class Settings(BaseSettings):
     aws_s3_base_path: str = "analyses"
     aws_s3_profile_base_path: str = "profiles"
     signed_url_expires_seconds: int = 3600
+    cors_allow_origins: str = "*"
 
-    mongodb_uri: str = "mongodb://localhost:27017"
-    mongodb_db_name: str = "alzhecare_db"
-    mongodb_users_collection: str = "users"
-    mongodb_analyses_collection: str = "analyses"
-    mongodb_doctor_requests_collection: str = "doctor_requests"
-    mongodb_doctor_patient_links_collection: str = "doctor_patient_links"
-    mongodb_appointments_collection: str = "appointments"
-    mongodb_notifications_collection: str = "notifications"
+    database_url: str = ""
+    sql_auto_init: bool = False
+    sql_verify_schema_on_startup: bool = True
+    sql_seed_test_users: bool = False
+    sql_test_users_password: str = ""
+
+    @field_validator("secret_key")
+    @classmethod
+    def validate_secret_key(cls, value: str) -> str:
+        if not value or not value.strip() or value.strip().lower() in {"change_this_secret_key", "changeme"}:
+            raise ValueError("SECRET_KEY invalida o vacia. Configura una clave robusta en el entorno.")
+        if len(value.strip()) < 24:
+            raise ValueError("SECRET_KEY debe tener al menos 24 caracteres.")
+        return value
+
+    @field_validator("database_url")
+    @classmethod
+    def validate_database_url(cls, value: str) -> str:
+        if not value or not value.strip():
+            raise ValueError("DATABASE_URL es obligatoria.")
+        return value
+
+    @field_validator("sql_test_users_password")
+    @classmethod
+    def validate_seed_password(cls, value: str, info) -> str:
+        seed_enabled = bool(info.data.get("sql_seed_test_users", False))
+        if seed_enabled and (not value or len(value) < 8):
+            raise ValueError("SQL_TEST_USERS_PASSWORD debe existir y tener >= 8 caracteres cuando SQL_SEED_TEST_USERS=true")
+        return value
+
+    @property
+    def cors_origins(self) -> list[str]:
+        raw = (self.cors_allow_origins or "").strip()
+        if not raw:
+            return []
+        if raw == "*":
+            return ["*"]
+        return [origin.strip() for origin in raw.split(",") if origin.strip()]
 
 
 @lru_cache

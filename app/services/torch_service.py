@@ -73,7 +73,7 @@ class TorchService:
         self.translations = {
             "very mild dementia": "Demencia muy leve",
             "mild dementia": "Demencia leve",
-            "non dementia": "Sin demencia",
+            "non demented": "Sin demencia",
             "moderate dementia": "Demencia moderada",
         }
 
@@ -150,7 +150,7 @@ class TorchService:
 
         try:
             image = Image.open(image_path).convert("RGB")
-            input_tensor = self.transform(image).unsqueeze(0).to(self.device) # type: ignore
+            input_tensor = self.transform(image).unsqueeze(0).to(self.device) # pyright: ignore[reportAttributeAccessIssue]
 
             with torch.no_grad():
                 output = self.model(input_tensor)
@@ -158,7 +158,7 @@ class TorchService:
                 predicted_prob, predicted_idx = torch.max(probabilities, dim=1)
 
             idx = int(predicted_idx.item())
-            confidence = float(predicted_prob.item())
+            confidence = round(float(predicted_prob.item()), 6)
             class_name = self.classes[idx]
             result_label = self._translate_class(class_name)
 

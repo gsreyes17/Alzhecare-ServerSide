@@ -1,8 +1,8 @@
-from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
+from fastapi import APIRouter, Depends, File, HTTPException, Query, UploadFile
 
 from app.dependencies import require_roles
 from app.schemas.auth import UserRole
-from app.schemas.coordinacion import (
+from app.schemas.coordination import (
     AppointmentCreateRequest,
     AppointmentResponse,
     AppointmentUpdateStatusRequest,
@@ -10,8 +10,8 @@ from app.schemas.coordinacion import (
     BindingResponse,
     BasicUserResponse,
 )
-from app.schemas.diagnostico import AnalysisResponse
-from app.services.coordinacion_service import coordination_service
+from app.schemas.diagnosis import AnalysisResponse
+from app.services.coordination_service import coordination_service
 
 router = APIRouter(prefix="/api/doctor", tags=["Doctor"])
 
@@ -52,7 +52,7 @@ async def list_assigned_patients(
 @router.get("/patients/{patient_user_id}/history")
 async def get_patient_history(
     patient_user_id: str,
-    limit: int = 100,
+    limit: int = Query(default=100, ge=1, le=500),
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
     return {
@@ -108,7 +108,7 @@ async def create_appointment(
 
 @router.get("/appointments", response_model=list[AppointmentResponse])
 async def list_doctor_appointments(
-    status: str | None = None,
+    status: str | None = Query(default=None, pattern="^(programada|realizada|cancelada)$"),
     current_user: dict = Depends(require_roles(UserRole.doctor.value)),
 ):
     return coordination_service.list_doctor_appointments(current_user["id"], status=status)
