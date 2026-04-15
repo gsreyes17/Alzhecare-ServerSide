@@ -4,7 +4,7 @@ Este documento describe los endpoints expuestos en los routers de FastAPI, sus J
 
 ## 1. Base de API y convenciones
 
-- Base URL local sugerida: `http://localhost:8010`
+- Base URL local sugerida: `http://localhost:8000`
 - Healthcheck: `GET /health`
 - Formato de fecha/hora: ISO 8601 (ejemplo: `2026-04-13T15:30:00+00:00`)
 - Error estandar FastAPI (general):

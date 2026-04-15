@@ -18,7 +18,7 @@ from app.routers.patient import router as patient_router
 from fastapi.security import OAuth2PasswordBearer
 
 settings = get_settings()
-app = FastAPI(title=settings.app_name, debug=settings.debug)
+app = FastAPI(title=settings.APP_NAME, debug=settings.DEBUG)
 logger = logging.getLogger(__name__)
 
 app.add_middleware(

@@ -18,7 +18,7 @@ def get_current_active_user(token: str = Depends(oauth2_scheme)) -> dict:
     )
 
     try:
-        payload = jwt.decode(token, settings.secret_key, algorithms=[settings.algorithm])
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
         user_id: str | None = payload.get("sub")
         if user_id is None:
             raise credentials_exception

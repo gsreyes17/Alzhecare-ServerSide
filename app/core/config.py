@@ -6,35 +6,34 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    APP_NAME: str
+    DEBUG: bool
 
-    app_name: str = "Alzhecare API"
-    debug: bool = False
+    SECRET_KEY: str
+    ALGORITHM: str
+    ACCESS_TOKEN_EXPIRE_MINUTES: int
 
-    secret_key: str = ""
-    algorithm: str = "HS256"
-    access_token_expire_minutes: int = 120
+    AWS_ACCESS_KEY_ID: str
+    AWS_SECRET_ACCESS_KEY: str
+    AWS_REGION: str
+    AWS_S3_BUCKET: str
+    AWS_S3_BASE_PATH: str
+    AWS_S3_PROFILE_BASE_PATH: str
+    SIGNED_URL_EXPIRES_SECONDS: int
 
-    torch_model_path: str = str(Path("app") / "models" / "v1" / "alzheimer_ensemble_v1.pth")
-    torch_label_classes_path: str = str(Path("app") / "models" / "v1" / "le_classes.pkl")
-    torch_device: str = "auto"
+    CORS_ALLOW_ORIGINS: str = "*"
 
-    aws_access_key_id: str = ""
-    aws_secret_access_key: str = ""
-    aws_region: str = "us-east-1"
-    aws_s3_bucket: str = ""
-    aws_s3_base_path: str = "analyses"
-    aws_s3_profile_base_path: str = "profiles"
-    signed_url_expires_seconds: int = 3600
-    cors_allow_origins: str = "*"
+    DATABASE_URL: str
+    SQL_AUTO_INIT: bool
+    SQL_VERIFY_SCHEMA_ON_STARTUP: bool
+    SQL_SEED_TEST_USERS: bool
+    SQL_TEST_USERS_PASSWORD: str
+    class Config:
+        env_file = ".env"
+        env_file_encoding = 'utf-8'
+        case_sensitive = True
 
-    database_url: str = ""
-    sql_auto_init: bool = False
-    sql_verify_schema_on_startup: bool = True
-    sql_seed_test_users: bool = False
-    sql_test_users_password: str = ""
-
-    @field_validator("secret_key")
+    @field_validator("SECRET_KEY")
     @classmethod
     def validate_secret_key(cls, value: str) -> str:
         if not value or not value.strip() or value.strip().lower() in {"change_this_secret_key", "changeme"}:
@@ -43,24 +42,24 @@ class Settings(BaseSettings):
             raise ValueError("SECRET_KEY debe tener al menos 24 caracteres.")
         return value
 
-    @field_validator("database_url")
+    @field_validator("DATABASE_URL")
     @classmethod
     def validate_database_url(cls, value: str) -> str:
         if not value or not value.strip():
             raise ValueError("DATABASE_URL es obligatoria.")
         return value
 
-    @field_validator("sql_test_users_password")
+    @field_validator("SQL_TEST_USERS_PASSWORD")
     @classmethod
     def validate_seed_password(cls, value: str, info) -> str:
-        seed_enabled = bool(info.data.get("sql_seed_test_users", False))
+        seed_enabled = bool(info.data.get("SQL_SEED_TEST_USERS", False))
         if seed_enabled and (not value or len(value) < 8):
             raise ValueError("SQL_TEST_USERS_PASSWORD debe existir y tener >= 8 caracteres cuando SQL_SEED_TEST_USERS=true")
         return value
 
     @property
     def cors_origins(self) -> list[str]:
-        raw = (self.cors_allow_origins or "").strip()
+        raw = (self.CORS_ALLOW_ORIGINS or "").strip()
         if not raw:
             return []
         if raw == "*":
@@ -70,4 +69,4 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    return Settings() # pyright: ignore[reportCallIssue]

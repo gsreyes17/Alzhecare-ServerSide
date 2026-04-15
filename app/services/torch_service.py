@@ -66,9 +66,9 @@ class EnsembleModel(nn.Module):
 class TorchService:
     def __init__(self) -> None:
         settings = get_settings()
-        self.model_path = self._resolve_path(settings.torch_model_path)
-        self.classes_path = self._resolve_path(settings.torch_label_classes_path)
-        self.device = self._resolve_device(settings.torch_device)
+        self.model_path = self._resolve_path(str(Path("app") / "models" / "v1" / "alzheimer_ensemble_v1.pth"))
+        self.classes_path = self._resolve_path(str(Path("app") / "models" / "v1" / "le_classes.pkl"))
+        self.device = self._resolve_device("auto")
 
         self.translations = {
             "very mild dementia": "Demencia muy leve",

@@ -24,9 +24,9 @@ def get_password_hash(password: str) -> str:
 
 def create_access_token(data: Dict[str, Any]) -> str:
     settings = get_settings()
-    if settings.algorithm != "HS256":
+    if settings.ALGORITHM != "HS256":
         raise ValueError("ALGORITHM no soportado. Usa HS256.")
     to_encode = data.copy()
-    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.access_token_expire_minutes)
+    expire = datetime.now(timezone.utc) + timedelta(minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode.update({"exp": expire})
-    return jwt.encode(to_encode, settings.secret_key, algorithm=settings.algorithm)
+    return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)

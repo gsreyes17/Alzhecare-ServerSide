@@ -10,15 +10,15 @@ from app.core.config import get_settings
 class S3Service:
     def __init__(self) -> None:
         settings = get_settings()
-        self.bucket = settings.aws_s3_bucket
-        self.base_path = settings.aws_s3_base_path.strip("/")
-        self.profile_base_path = settings.aws_s3_profile_base_path.strip("/")
-        self.url_ttl_seconds = settings.signed_url_expires_seconds
+        self.bucket = settings.AWS_S3_BUCKET
+        self.base_path = settings.AWS_S3_BASE_PATH.strip("/")
+        self.profile_base_path = settings.AWS_S3_PROFILE_BASE_PATH.strip("/")
+        self.url_ttl_seconds = settings.SIGNED_URL_EXPIRES_SECONDS
         self.client = boto3.client(
             "s3",
-            aws_access_key_id=settings.aws_access_key_id,
-            aws_secret_access_key=settings.aws_secret_access_key,
-            region_name=settings.aws_region,
+            aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_REGION,
         )
 
     def upload_image(

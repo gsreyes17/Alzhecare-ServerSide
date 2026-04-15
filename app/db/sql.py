@@ -31,7 +31,7 @@ def get_engine() -> Engine:
     if _engine is None:
         settings = get_settings()
         _engine = create_engine(
-            settings.database_url,
+            settings.DATABASE_URL,
             pool_pre_ping=True,
             future=True,
         )
@@ -62,29 +62,29 @@ def _missing_tables(connection) -> set[str]:
 
 def _seed_basic_test_users(connection) -> None:
     settings = get_settings()
-    if not settings.sql_seed_test_users:
+    if not settings.SQL_SEED_TEST_USERS:
         return
 
     now = datetime.now(timezone.utc)
-    password_hash = get_password_hash(settings.sql_test_users_password)
+    password_hash = get_password_hash(settings.SQL_TEST_USERS_PASSWORD)
     users = [
         {
-            "username": "test_admin",
-            "email": "test_admin@alzhecare.local",
+            "username": "admin_",
+            "email": "test_admin@alzhecare.com",
             "name": "Test",
             "lastname": "Admin",
             "role": "admin",
         },
         {
-            "username": "test_doctor",
-            "email": "test_doctor@alzhecare.local",
+            "username": "doctor_",
+            "email": "test_doctor@alzhecare.com",
             "name": "Test",
             "lastname": "Doctor",
             "role": "doctor",
         },
         {
-            "username": "test_patient",
-            "email": "test_patient@alzhecare.local",
+            "username": "paciente_",
+            "email": "test_patient@alzhecare.com",
             "name": "Test",
             "lastname": "Patient",
             "role": "paciente",
@@ -150,7 +150,7 @@ def _seed_basic_test_users(connection) -> None:
 
 def init_sql_schema_if_enabled() -> None:
     settings = get_settings()
-    if not settings.sql_auto_init:
+    if not settings.SQL_AUTO_INIT:
         return
 
     schema_path = Path(__file__).with_name("schema_normalized.sql")
@@ -170,7 +170,7 @@ def init_sql_schema_if_enabled() -> None:
 
 def verify_and_bootstrap_database() -> None:
     settings = get_settings()
-    if not settings.sql_verify_schema_on_startup:
+    if not settings.SQL_VERIFY_SCHEMA_ON_STARTUP:
         return
 
     statements = _read_schema_statements()
@@ -184,6 +184,5 @@ def verify_and_bootstrap_database() -> None:
             for statement in statements:
                 connection.execute(text(statement))
 
-        # La semilla de usuarios de prueba solo se ejecuta si se detectan tablas faltantes, para evitar inserciones accidentales en bases ya inicializadas
         if not _missing_tables(connection):
             _seed_basic_test_users(connection)
