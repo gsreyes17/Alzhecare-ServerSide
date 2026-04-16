@@ -47,8 +47,8 @@ uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8010
 
 ## 4) Verificar que esta arriba
 
-- Health: `GET http://localhost:8010/health`
-- Docs Swagger: `http://localhost:8010/docs`
+- Health: `GET http://localhost:8000/health`
+- Docs Swagger: `http://localhost:8000/docs`
 
 ## Errores comunes
 
